@@ -15,7 +15,6 @@ import java.util.Properties;
 
 /**
  * @author caohongliang
- * @date 2018/11/16
  */
 public class ServicePlugin extends PluginAdapter {
     /**
