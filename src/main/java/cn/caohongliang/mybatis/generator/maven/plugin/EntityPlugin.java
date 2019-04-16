@@ -1,6 +1,6 @@
-package cn.caohongliang.mybatis.generator.plugin;
+package cn.caohongliang.mybatis.generator.maven.plugin;
 
-import cn.caohongliang.mybatis.generator.util.PluginUtils;
+import cn.caohongliang.mybatis.generator.maven.util.PluginUtils;
 import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
@@ -17,8 +17,9 @@ import java.util.List;
  * @author caohongliang
  */
 public class EntityPlugin extends PluginAdapter {
-    private static final String PRIMARY_KEY_PACKAGE = "key";
-    private static final String EXAMPLE_PACKAGE = "example";
+    public static boolean useSwagger;
+    public static String keyPackage;
+    public static String examplePackage;
 
     @Override
     public boolean validate(List<String> warnings) {
@@ -58,8 +59,10 @@ public class EntityPlugin extends PluginAdapter {
         javaDocLines.add(" * " + remarks);
         javaDocLines.add(" */");
         //设置字段注释
-        field.addAnnotation("@ApiModelProperty(\"" + remarks + "\")");
-        topLevelClass.addImportedType("io.swagger.annotations.ApiModelProperty");
+        if (useSwagger) {
+            field.addAnnotation("@ApiModelProperty(\"" + remarks + "\")");
+            topLevelClass.addImportedType("io.swagger.annotations.ApiModelProperty");
+        }
         return true;
     }
 
@@ -91,7 +94,7 @@ public class EntityPlugin extends PluginAdapter {
         try {
             java.lang.reflect.Method method = typeClass.getDeclaredMethod("simpleParse", String.class);
             method.setAccessible(true);
-            String primaryKeyType = type.getPackageName() + wrapper(PRIMARY_KEY_PACKAGE) + type.getShortNameWithoutTypeArguments();
+            String primaryKeyType = type.getPackageName() + wrapper(keyPackage) + type.getShortNameWithoutTypeArguments();
             method.invoke(type, primaryKeyType);
             introspectedTable.setPrimaryKeyType(primaryKeyType);
         } catch (Exception e) {
@@ -104,7 +107,7 @@ public class EntityPlugin extends PluginAdapter {
     public boolean modelExampleClassGenerated(TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
         //移动example文件到entity.example中
         FullyQualifiedJavaType type = topLevelClass.getType();
-        String exampleType = type.getPackageName() + wrapper(EXAMPLE_PACKAGE) + type.getShortNameWithoutTypeArguments();
+        String exampleType = type.getPackageName() + wrapper(examplePackage) + type.getShortNameWithoutTypeArguments();
         PluginUtils.setMethodValue(type, "simpleParse", exampleType, String.class);
         introspectedTable.setExampleType(exampleType);
         return true;

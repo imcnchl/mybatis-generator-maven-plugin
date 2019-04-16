@@ -1,19 +1,18 @@
-package cn.caohongliang.mybatis.generator.util;
+package cn.caohongliang.mybatis.generator.maven.util;
 
+import org.apache.maven.plugin.AbstractMojo;
 import org.mybatis.generator.api.IntrospectedTable;
-import org.mybatis.generator.api.dom.java.FullyQualifiedJavaType;
-import org.mybatis.generator.api.dom.java.Method;
-import org.mybatis.generator.api.dom.java.Parameter;
 
 import java.io.File;
-import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author caohongliang
  */
 public class PluginUtils {
+    private static final Map<Class<? extends AbstractMojo>, AbstractMojo> mojoCache = new HashMap<>();
+
+
 
     /**
      * 类注释
@@ -29,7 +28,7 @@ public class PluginUtils {
         javaDocLines.add("/**");
         javaDocLines.add(" * " + remarks);
         javaDocLines.add(" * ");
-        javaDocLines.add(" * @author " + System.getProperty("user.name"));
+        javaDocLines.add(" * @author @mbg.generated");
         javaDocLines.add(" */");
     }
 
@@ -67,7 +66,7 @@ public class PluginUtils {
         return str == null || "".equals(str);
     }
 
-    public static void setMethodValue(Object instance, String methodName, Object value, Class ... parameterTypes){
+    public static void setMethodValue(Object instance, String methodName, Object value, Class... parameterTypes) {
         try {
             //设置key类到entity/key中
             Class<?> type = instance.getClass();

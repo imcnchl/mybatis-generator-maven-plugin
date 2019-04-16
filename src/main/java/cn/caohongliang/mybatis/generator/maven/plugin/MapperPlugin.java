@@ -1,6 +1,6 @@
-package cn.caohongliang.mybatis.generator.plugin;
+package cn.caohongliang.mybatis.generator.maven.plugin;
 
-import cn.caohongliang.mybatis.generator.util.PluginUtils;
+import cn.caohongliang.mybatis.generator.maven.util.PluginUtils;
 import org.mybatis.generator.api.GeneratedXmlFile;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
@@ -11,7 +11,6 @@ import org.mybatis.generator.api.dom.java.TopLevelClass;
 import org.mybatis.generator.config.JavaClientGeneratorConfiguration;
 
 import java.util.List;
-import java.util.Properties;
 
 /**
  * entity 插件
@@ -20,10 +19,13 @@ import java.util.Properties;
  */
 public class MapperPlugin extends PluginAdapter {
     /**
-     * mapper接口的父类
+     * mapper接口的父类（含主键）
      */
-    private String rootInterface;
-    private String rootNotPrimaryKeyInterface;
+    public static String rootInterface;
+    /**
+     * mapper接口的父类（不含主键）
+     */
+    public static String rootInterfaceNotPrimaryKey;
     private FullyQualifiedJavaType primaryKeyType;
 
     @Override
@@ -31,27 +33,26 @@ public class MapperPlugin extends PluginAdapter {
         return true;
     }
 
-
-    @Override
-    public void setProperties(Properties properties) {
-        rootInterface = PluginUtils.getString(properties, "rootInterface", null);
-        rootNotPrimaryKeyInterface = PluginUtils.getString(properties, "rootNotPrimaryKeyInterface", null);
-        super.setProperties(properties);
-    }
-
     @Override
     public boolean clientGenerated(Interface interfaze, TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
+        System.out.println("执行 clientGenerated");
+        boolean hasPrimaryKey = !introspectedTable.getPrimaryKeyColumns().isEmpty();
+        if (!hasPrimaryKey && PluginUtils.isEmpty(rootInterfaceNotPrimaryKey)) {
+            String tableName = introspectedTable.getTableConfiguration().getTableName();
+            String message = "表 " + tableName + " 没有主键且没有配置 daoRootInterfaceNotPrimaryKey";
+            throw new RuntimeException(message);
+        }
         List<String> javaDocLines = interfaze.getJavaDocLines();
         PluginUtils.classComment(javaDocLines, introspectedTable, interfaze.getType().getShortName(), " Mapper");
 
-        FullyQualifiedJavaType baseInterface = primaryKeyType != null ?
-                new FullyQualifiedJavaType(rootInterface) : new FullyQualifiedJavaType(rootNotPrimaryKeyInterface);
+        FullyQualifiedJavaType baseInterface = hasPrimaryKey ?
+                new FullyQualifiedJavaType(rootInterface) : new FullyQualifiedJavaType(rootInterfaceNotPrimaryKey);
         //设置泛型
         FullyQualifiedJavaType entityType = new FullyQualifiedJavaType(introspectedTable.getBaseRecordType());
         FullyQualifiedJavaType exampleType = new FullyQualifiedJavaType(introspectedTable.getExampleType());
         baseInterface.addTypeArgument(entityType);
         baseInterface.addTypeArgument(exampleType);
-        if (primaryKeyType != null) {
+        if (hasPrimaryKey) {
             baseInterface.addTypeArgument(primaryKeyType);
         }
 
@@ -60,11 +61,11 @@ public class MapperPlugin extends PluginAdapter {
         interfaze.addSuperInterface(baseInterface);
         interfaze.addImportedType(entityType);
         interfaze.addImportedType(exampleType);
-        if (primaryKeyType != null) {
+        if (hasPrimaryKey) {
             interfaze.addImportedType(primaryKeyType);
             interfaze.addImportedType(new FullyQualifiedJavaType(rootInterface));
         } else {
-            interfaze.addImportedType(new FullyQualifiedJavaType(rootNotPrimaryKeyInterface));
+            interfaze.addImportedType(new FullyQualifiedJavaType(rootInterfaceNotPrimaryKey));
         }
 
         //已存在的Mapper.java文件不需要覆盖
@@ -73,12 +74,12 @@ public class MapperPlugin extends PluginAdapter {
         String targetPackage = configuration.getTargetPackage();
         String fileName = interfaze.getType().getShortName() + ".java";
         boolean existFile = PluginUtils.existFile(targetProject, targetPackage, fileName);
-        primaryKeyType = null;
         return !existFile;
     }
 
     @Override
     public boolean sqlMapGenerated(GeneratedXmlFile sqlMap, IntrospectedTable introspectedTable) {
+        System.out.println("执行 sqlMapGenerated");
         return true;
     }
 
@@ -98,6 +99,7 @@ public class MapperPlugin extends PluginAdapter {
     public boolean clientSelectByPrimaryKeyMethodGenerated(Method method, Interface interfaze, IntrospectedTable introspectedTable) {
         // selectByPrimaryKey
         primaryKeyType = method.getParameters().get(0).getType();
+        System.out.println("执行 selectByPrimaryKey: " + primaryKeyType);
         return false;
     }
 
