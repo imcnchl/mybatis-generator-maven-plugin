@@ -6,7 +6,7 @@
 
     <groupId>cn.caohongliang</groupId>
     <artifactId>mybatis-generator-maven-plugin</artifactId>
-    <version>1.0.1-SNAPHOT</version>
+    <version>1.0.2</version>
     <packaging>maven-plugin</packaging>
     <name>mybatis-generator-maven-plugin</name>
     <description>mybatis generator use lombok</description>

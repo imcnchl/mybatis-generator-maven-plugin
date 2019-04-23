@@ -10,6 +10,8 @@ import org.mybatis.generator.api.dom.java.Method;
 import org.mybatis.generator.api.dom.java.TopLevelClass;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * entity 插件
@@ -17,6 +19,8 @@ import java.util.List;
  * @author caohongliang
  */
 public class EntityPlugin extends PluginAdapter {
+    private static final Pattern PATTERN = Pattern.compile("(?m)^.*$");
+
     public static boolean useSwagger;
     public static String keyPackage;
     public static String examplePackage;
@@ -55,12 +59,27 @@ public class EntityPlugin extends PluginAdapter {
         javaDocLines.clear();
         //设置字段注释
         String remarks = PluginUtils.isEmpty(introspectedColumn.getRemarks()) ? field.getName() : introspectedColumn.getRemarks();
+        Matcher matcher = PATTERN.matcher(remarks);
+
         javaDocLines.add("/**");
-        javaDocLines.add(" * " + remarks);
+        String br = "<br/>";
+        String apiModelProperty = "@ApiModelProperty(\"";
+        while (matcher.find()) {
+            String group = matcher.group();
+            javaDocLines.add(" * " + group);
+            apiModelProperty = apiModelProperty + group + br;
+        }
+        apiModelProperty = apiModelProperty + "\")";
         javaDocLines.add(" */");
+
+        int index = apiModelProperty.lastIndexOf(br);
+        if (index != -1) {
+            apiModelProperty = apiModelProperty.replaceAll("<br/>\\s*\"\\)", "\")");
+        }
+
         //设置字段注释
         if (useSwagger) {
-            field.addAnnotation("@ApiModelProperty(\"" + remarks + "\")");
+            field.addAnnotation(apiModelProperty);
             topLevelClass.addImportedType("io.swagger.annotations.ApiModelProperty");
         }
         return true;
