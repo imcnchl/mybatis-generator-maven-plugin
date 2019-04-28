@@ -6,7 +6,7 @@
 
     <groupId>cn.caohongliang</groupId>
     <artifactId>mybatis-generator-maven-plugin</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>maven-plugin</packaging>
     <name>mybatis-generator-maven-plugin</name>
     <description>mybatis generator use lombok</description>
@@ -66,6 +66,20 @@
             <artifactId>mybatis-generator-core</artifactId>
             <version>${mybatis-generator-core.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.46</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.0.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -99,6 +113,17 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!--<plugin>
+                <groupId>cn.caohongliang</groupId>
+                <artifactId>mybatis-generator-maven-plugin</artifactId>
+                <version>1.0.3</version>
+                <configuration>
+                    <includeAllDependencies>true</includeAllDependencies>
+                    <configurationFile>${basedir}/src/test/resources/generatorConfig.xml</configurationFile>
+                    <daoRootInterface>cn.caohongliang.mybatis.example.dao.BaseDao</daoRootInterface>
+                </configuration>
+            </plugin>-->
         </plugins>
     </build>
 

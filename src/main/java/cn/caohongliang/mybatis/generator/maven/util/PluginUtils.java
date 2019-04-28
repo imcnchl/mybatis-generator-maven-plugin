@@ -1,18 +1,19 @@
 package cn.caohongliang.mybatis.generator.maven.util;
 
-import org.apache.maven.plugin.AbstractMojo;
 import org.mybatis.generator.api.IntrospectedTable;
+import org.mybatis.generator.api.ShellCallback;
+import org.mybatis.generator.exception.ShellException;
+import org.mybatis.generator.internal.DefaultShellCallback;
 
 import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * @author caohongliang
  */
 public class PluginUtils {
-    private static final Map<Class<? extends AbstractMojo>, AbstractMojo> mojoCache = new HashMap<>();
-
-
+    public static ShellCallback shellCallback = new DefaultShellCallback(true);
 
     /**
      * 类注释
@@ -33,28 +34,13 @@ public class PluginUtils {
     }
 
     public static boolean existFile(String targetProject, String targetPackage, String fileName) {
-
-        File project = new File(targetProject);
-        if (!project.isDirectory()) {
-            return false;
+        try {
+            File directory = shellCallback.getDirectory(targetProject, targetPackage);
+            File targetFile = new File(directory, fileName);
+            return targetFile.exists();
+        } catch (ShellException e) {
+            throw new RuntimeException(e);
         }
-
-        StringBuilder sb = new StringBuilder();
-        StringTokenizer st = new StringTokenizer(targetPackage, ".");
-        while (st.hasMoreTokens()) {
-            sb.append(st.nextToken());
-            sb.append(File.separatorChar);
-        }
-        File directory = new File(project, sb.toString());
-        if (!directory.isDirectory()) {
-            boolean rc = directory.mkdirs();
-            if (!rc) {
-                return false;
-            }
-        }
-
-        File file = new File(directory, fileName);
-        return file.exists();
     }
 
     public static String getString(Properties properties, String key, String defaultValue) {

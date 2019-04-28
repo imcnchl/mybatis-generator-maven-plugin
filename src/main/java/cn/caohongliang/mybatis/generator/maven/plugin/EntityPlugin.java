@@ -21,9 +21,9 @@ import java.util.regex.Pattern;
 public class EntityPlugin extends PluginAdapter {
     private static final Pattern PATTERN = Pattern.compile("(?m)^.*$");
 
-    public static boolean useSwagger;
-    public static String keyPackage;
-    public static String examplePackage;
+    public static boolean useSwagger = true;
+    public static String keyPackage = "key";
+    public static String examplePackage = "example";
 
     @Override
     public boolean validate(List<String> warnings) {

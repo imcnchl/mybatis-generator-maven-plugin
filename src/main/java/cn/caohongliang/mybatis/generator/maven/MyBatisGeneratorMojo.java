@@ -2,6 +2,7 @@ package cn.caohongliang.mybatis.generator.maven;
 
 import cn.caohongliang.mybatis.generator.maven.plugin.EntityPlugin;
 import cn.caohongliang.mybatis.generator.maven.plugin.MapperPlugin;
+import cn.caohongliang.mybatis.generator.maven.util.PluginUtils;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
@@ -121,6 +122,18 @@ public class MyBatisGeneratorMojo extends AbstractMojo {
     @Parameter
     private String daoRootInterfaceNotPrimaryKey;
 
+    /**
+     * 自动生成的xml文件存放位置
+     */
+    @Parameter(defaultValue = "autogen")
+    private String autoGenXmlDir;
+
+    /**
+     * 是否自动生成存放自定义SQL的文件（已生成则不会覆盖）
+     */
+    @Parameter(defaultValue = "true")
+    private boolean genCustomFile;
+
     @Override
     public void execute() throws MojoExecutionException {
         if (skip) {
@@ -168,6 +181,7 @@ public class MyBatisGeneratorMojo extends AbstractMojo {
             setPluginsConfig();
 
             ShellCallback callback = new MavenShellCallback(this, overwrite);
+            PluginUtils.shellCallback = callback;
 
             MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config,
                     callback, warnings);
@@ -217,6 +231,8 @@ public class MyBatisGeneratorMojo extends AbstractMojo {
 
         MapperPlugin.rootInterface = this.daoRootInterface;
         MapperPlugin.rootInterfaceNotPrimaryKey = this.daoRootInterfaceNotPrimaryKey;
+        MapperPlugin.autoGenXmlDir = this.autoGenXmlDir;
+        MapperPlugin.genCustomFile = this.genCustomFile;
 
     }
 
