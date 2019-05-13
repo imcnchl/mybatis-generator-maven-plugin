@@ -1,5 +1,6 @@
 package cn.caohongliang.mybatis.generator.maven;
 
+import cn.caohongliang.mybatis.generator.maven.plugin.BaseColumnListPlugin;
 import cn.caohongliang.mybatis.generator.maven.plugin.EntityPlugin;
 import cn.caohongliang.mybatis.generator.maven.plugin.MapperPlugin;
 import cn.caohongliang.mybatis.generator.maven.util.PluginUtils;
@@ -38,7 +39,11 @@ import java.util.*;
 public class MyBatisGeneratorMojo extends AbstractMojo {
 
     private ThreadLocal<ClassLoader> savedClassloader = new ThreadLocal<>();
-    private List<Class<? extends Plugin>> defaultPluginTypes = Arrays.asList(EntityPlugin.class, MapperPlugin.class);
+    private List<Class<? extends Plugin>> defaultPluginTypes = Arrays.asList(
+            EntityPlugin.class,
+            MapperPlugin.class,
+            BaseColumnListPlugin.class
+    );
 
     /**
      * 当前项目

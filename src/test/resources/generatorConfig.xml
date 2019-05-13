@@ -22,7 +22,7 @@
         <jdbcConnection driverClass="com.mysql.jdbc.Driver"
                         connectionURL="jdbc:mysql://127.0.0.1:3306/mybatis_generator_example?useInformationSchema=true"
                         userId="root"
-                        password="caohongliang"/>
+                        password="root"/>
 
         <!-- 类型转换 -->
         <javaTypeResolver>
@@ -64,5 +64,11 @@
                mapperName="product.dao.ProductDao">
             <generatedKey column="id" sqlStatement="MySQL" identity="true"/>
         </table>
+        <table tableName="article"
+               domainObjectName="product.entity.Article"
+               mapperName="product.dao.ArticleDao">
+            <generatedKey column="id" sqlStatement="MySQL" identity="true"/>
+        </table>
+
     </context>
 </generatorConfiguration>
