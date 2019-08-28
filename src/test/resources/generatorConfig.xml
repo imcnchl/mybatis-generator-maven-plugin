@@ -7,6 +7,8 @@
     <sqlMapGenerator targetPackage
     javaClientGenerator targetPackage
     -->
+    <properties resource=""/>
+
     <context id="permission">
 
         <!-- 注释 -->
@@ -55,7 +57,6 @@
         <table tableName="user"
                domainObjectName="user.entity.User"
                mapperName="user.dao.UserDao">
-            <property name="subPackage" value="aa"/>
             <generatedKey column="id" sqlStatement="MySQL" identity="true"/>
         </table>
 

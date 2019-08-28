@@ -2,6 +2,7 @@ package cn.caohongliang.mybatis.generator.maven.util;
 
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.ShellCallback;
+import org.mybatis.generator.api.dom.java.TopLevelClass;
 import org.mybatis.generator.exception.ShellException;
 import org.mybatis.generator.internal.DefaultShellCallback;
 
@@ -33,6 +34,14 @@ public class PluginUtils {
         javaDocLines.add(" */");
     }
 
+    /**
+     * 判断文件是否存在
+     *
+     * @param targetProject targetProject
+     * @param targetPackage targetPackage
+     * @param fileName fileName
+     * @return exist=true
+     */
     public static boolean existFile(String targetProject, String targetPackage, String fileName) {
         try {
             File directory = shellCallback.getDirectory(targetProject, targetPackage);
@@ -62,5 +71,16 @@ public class PluginUtils {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void addLombokAnnotation(TopLevelClass topLevelClass) {
+        topLevelClass.addAnnotation("@Getter");
+        topLevelClass.addAnnotation("@Setter");
+        topLevelClass.addAnnotation("@NoArgsConstructor");
+        topLevelClass.addAnnotation("@AllArgsConstructor");
+        topLevelClass.addImportedType("lombok.Getter");
+        topLevelClass.addImportedType("lombok.Setter");
+        topLevelClass.addImportedType("lombok.NoArgsConstructor");
+        topLevelClass.addImportedType("lombok.AllArgsConstructor");
     }
 }

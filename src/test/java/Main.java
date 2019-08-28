@@ -1,5 +1,6 @@
 import cn.caohongliang.mybatis.generator.maven.plugin.BaseColumnListPlugin;
-import cn.caohongliang.mybatis.generator.maven.plugin.EntityPlugin;
+import cn.caohongliang.mybatis.generator.maven.plugin.DomainLombokPlugin;
+import cn.caohongliang.mybatis.generator.maven.plugin.DomainSubPackagePlugin;
 import cn.caohongliang.mybatis.generator.maven.plugin.MapperPlugin;
 import cn.caohongliang.mybatis.generator.maven.util.PluginUtils;
 import org.mybatis.generator.api.MyBatisGenerator;
@@ -30,11 +31,12 @@ public class Main {
 
         //加载默认插件
         for (Context context : config.getContexts()) {
-            addPlugin(context, EntityPlugin.class);
+            addPlugin(context, DomainLombokPlugin.class);
             addPlugin(context, MapperPlugin.class);
-            MapperPlugin.rootInterface = "cn.caohongliang.mybatis.example.dao.BaseDao";
-            MapperPlugin.rootInterfaceNotPrimaryKey = "cn.caohongliang.mybatis.example.dao.BaseNotPrimaryKeyDao";
+            MapperPlugin.rootInterface = "cn.caohongliang.mybatis.generator.maven.dao.BaseDao";
+            MapperPlugin.rootInterfaceNotPrimaryKey = "cn.caohongliang.mybatis.generator.maven.dao.BaseNotPrimaryKeyDao";
             addPlugin(context, BaseColumnListPlugin.class);
+            addPlugin(context, DomainSubPackagePlugin.class);
         }
 
 

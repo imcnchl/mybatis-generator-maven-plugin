@@ -5,7 +5,6 @@ import org.mybatis.generator.api.IntrospectedColumn;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.PluginAdapter;
 import org.mybatis.generator.api.dom.java.Field;
-import org.mybatis.generator.api.dom.java.FullyQualifiedJavaType;
 import org.mybatis.generator.api.dom.java.Method;
 import org.mybatis.generator.api.dom.java.TopLevelClass;
 
@@ -14,16 +13,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * entity 插件
+ * 给 model 添加 lombok 注释
  *
  * @author caohongliang
  */
-public class EntityPlugin extends PluginAdapter {
+public class DomainLombokPlugin extends PluginAdapter {
     private static final Pattern PATTERN = Pattern.compile("(?m)^.*$");
-
     public static boolean useSwagger = true;
-    public static String keyPackage = "key";
-    public static String examplePackage = "example";
 
     @Override
     public boolean validate(List<String> warnings) {
@@ -38,19 +34,10 @@ public class EntityPlugin extends PluginAdapter {
         PluginUtils.classComment(javaDocLines, introspectedTable, defaultRemarks, " Entity");
 
         //该代码表示在生成class的时候，向topLevelClass添加一个@Setter和@Getter注解
-        addLombokAnnotation(topLevelClass);
+        PluginUtils.addLombokAnnotation(topLevelClass);
         topLevelClass.addAnnotation("@Builder");
         topLevelClass.addImportedType("lombok.Builder");
         return true;
-    }
-
-    private void addLombokAnnotation(TopLevelClass topLevelClass) {
-        topLevelClass.addAnnotation("@Data");
-        topLevelClass.addAnnotation("@NoArgsConstructor");
-        topLevelClass.addAnnotation("@AllArgsConstructor");
-        topLevelClass.addImportedType("lombok.Data");
-        topLevelClass.addImportedType("lombok.NoArgsConstructor");
-        topLevelClass.addImportedType("lombok.AllArgsConstructor");
     }
 
     @Override
@@ -101,38 +88,5 @@ public class EntityPlugin extends PluginAdapter {
                                               ModelClassType modelClassType) {
         //该方法在生成每一个属性的setter方法时候调用，如果我们不想生成setter，直接返回false即可；
         return false;
-    }
-
-    @Override
-    public boolean modelPrimaryKeyClassGenerated(TopLevelClass topLevelClass,
-                                                 IntrospectedTable introspectedTable) {
-        //该代码表示在生成class的时候，向topLevelClass添加一个@Setter和@Getter注解
-        addLombokAnnotation(topLevelClass);
-        FullyQualifiedJavaType type = topLevelClass.getType();
-        Class<? extends FullyQualifiedJavaType> typeClass = type.getClass();
-        try {
-            java.lang.reflect.Method method = typeClass.getDeclaredMethod("simpleParse", String.class);
-            method.setAccessible(true);
-            String primaryKeyType = type.getPackageName() + wrapper(keyPackage) + type.getShortNameWithoutTypeArguments();
-            method.invoke(type, primaryKeyType);
-            introspectedTable.setPrimaryKeyType(primaryKeyType);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean modelExampleClassGenerated(TopLevelClass topLevelClass, IntrospectedTable introspectedTable) {
-        //移动example文件到entity.example中
-        FullyQualifiedJavaType type = topLevelClass.getType();
-        String exampleType = type.getPackageName() + wrapper(examplePackage) + type.getShortNameWithoutTypeArguments();
-        PluginUtils.setMethodValue(type, "simpleParse", exampleType, String.class);
-        introspectedTable.setExampleType(exampleType);
-        return true;
-    }
-
-    private String wrapper(String str) {
-        return "." + str + ".";
     }
 }

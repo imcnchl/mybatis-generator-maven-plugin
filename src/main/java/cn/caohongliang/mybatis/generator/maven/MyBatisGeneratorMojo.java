@@ -1,8 +1,9 @@
 package cn.caohongliang.mybatis.generator.maven;
 
 import cn.caohongliang.mybatis.generator.maven.plugin.BaseColumnListPlugin;
-import cn.caohongliang.mybatis.generator.maven.plugin.EntityPlugin;
 import cn.caohongliang.mybatis.generator.maven.plugin.MapperPlugin;
+import cn.caohongliang.mybatis.generator.maven.plugin.DomainLombokPlugin;
+import cn.caohongliang.mybatis.generator.maven.plugin.DomainSubPackagePlugin;
 import cn.caohongliang.mybatis.generator.maven.util.PluginUtils;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.model.Resource;
@@ -33,6 +34,7 @@ import java.util.*;
 
 /**
  * Mybatis生成从这里启动
+ * @author caohongliang
  */
 @Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES,
         requiresDependencyResolution = ResolutionScope.TEST)
@@ -40,7 +42,8 @@ public class MyBatisGeneratorMojo extends AbstractMojo {
 
     private ThreadLocal<ClassLoader> savedClassloader = new ThreadLocal<>();
     private List<Class<? extends Plugin>> defaultPluginTypes = Arrays.asList(
-            EntityPlugin.class,
+            DomainLombokPlugin.class,
+            DomainSubPackagePlugin.class,
             MapperPlugin.class,
             BaseColumnListPlugin.class
     );
@@ -101,19 +104,22 @@ public class MyBatisGeneratorMojo extends AbstractMojo {
      * 是否使用swagger，如果为true，则在生成的entity中会给字段使用@ApiModelProperty注解
      */
     @Parameter(defaultValue = "true")
-    private boolean entityUseSwagger;
+    private boolean domainUseSwagger;
 
     /**
      * 多主键时的Key的类存放位置
      */
     @Parameter(defaultValue = "key")
-    private String entityKeyPackage;
+    private String domainKeyPackage;
 
     /**
      * example存放的位置
      */
     @Parameter(defaultValue = "example")
-    private String entityExamplePackage;
+    private String domainExamplePackage;
+
+    @Parameter(defaultValue = "blob")
+    private String domainBlobPackage;
 
     /**
      * Dao接口基类的类全名（有主键）
@@ -230,9 +236,11 @@ public class MyBatisGeneratorMojo extends AbstractMojo {
     }
 
     private void setPluginsConfig() {
-        EntityPlugin.useSwagger = this.entityUseSwagger;
-        EntityPlugin.keyPackage = this.entityKeyPackage;
-        EntityPlugin.examplePackage = this.entityExamplePackage;
+        DomainLombokPlugin.useSwagger = this.domainUseSwagger;
+
+        DomainSubPackagePlugin.keyPackage = this.domainKeyPackage;
+        DomainSubPackagePlugin.examplePackage = this.domainExamplePackage;
+        DomainSubPackagePlugin.blobPackage = this.domainBlobPackage;
 
         MapperPlugin.rootInterface = this.daoRootInterface;
         MapperPlugin.rootInterfaceNotPrimaryKey = this.daoRootInterfaceNotPrimaryKey;
