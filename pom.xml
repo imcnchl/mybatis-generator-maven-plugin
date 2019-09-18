@@ -6,7 +6,7 @@
 
     <groupId>cn.caohongliang</groupId>
     <artifactId>mybatis-generator-maven-plugin</artifactId>
-    <version>1.0.4</version>
+    <version>1.1.0</version>
     <packaging>maven-plugin</packaging>
     <name>mybatis-generator-maven-plugin</name>
     <description>mybatis generator use lombok</description>
@@ -135,17 +135,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <!--<plugin>
-                <groupId>cn.caohongliang</groupId>
-                <artifactId>mybatis-generator-maven-plugin</artifactId>
-                <version>1.0.3</version>
-                <configuration>
-                    <includeAllDependencies>true</includeAllDependencies>
-                    <configurationFile>${basedir}/src/test/resources/generatorConfig.xml</configurationFile>
-                    <daoRootInterface>cn.caohongliang.mybatis.generator.maven.dao.BaseDao</daoRootInterface>
-                </configuration>
-            </plugin>-->
         </plugins>
     </build>
 

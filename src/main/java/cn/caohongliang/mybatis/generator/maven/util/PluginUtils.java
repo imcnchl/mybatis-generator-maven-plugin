@@ -1,5 +1,6 @@
 package cn.caohongliang.mybatis.generator.maven.util;
 
+import org.mybatis.generator.api.GeneratedXmlFile;
 import org.mybatis.generator.api.IntrospectedTable;
 import org.mybatis.generator.api.ShellCallback;
 import org.mybatis.generator.api.dom.java.TopLevelClass;
@@ -50,6 +51,10 @@ public class PluginUtils {
         } catch (ShellException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static boolean existFile(GeneratedXmlFile file){
+        return existFile(file.getTargetProject(), file.getTargetPackage(), file.getFileName());
     }
 
     public static String getString(Properties properties, String key, String defaultValue) {

@@ -7,7 +7,8 @@
     <sqlMapGenerator targetPackage
     javaClientGenerator targetPackage
     -->
-    <properties resource=""/>
+<!--    <properties resource="application.properties" />-->
+<!--    <properties resource="application.yml"/>-->
 
     <context id="permission">
 
@@ -22,9 +23,9 @@
 
         <!-- jdbc连接 -->
         <jdbcConnection driverClass="com.mysql.jdbc.Driver"
-                        connectionURL="jdbc:mysql://127.0.0.1:3306/mybatis_generator_example?useInformationSchema=true"
+                        connectionURL="jdbc:mysql://120.24.53.124:8003/mybatis_generator_maven_plugin?useInformationSchema=true&amp;useUnicode=true&amp;characterEncoding=utf-8"
                         userId="root"
-                        password="root"/>
+                        password="3V7lM4Aey0qWAjah4qOs"/>
 
         <!-- 类型转换 -->
         <javaTypeResolver>
@@ -34,7 +35,7 @@
         </javaTypeResolver>
 
         <!-- 生成实体类地址 -->
-        <javaModelGenerator targetPackage="cn.caohongliang.mybatis.generator.example"
+        <javaModelGenerator targetPackage="cn.caohongliang.entity"
                             targetProject="src/test/java">
             <property name="enableSubPackages" value="true"/>
             <!-- 是否针对string类型的字段在set的时候进行trim调用 -->
@@ -48,28 +49,35 @@
         </sqlMapGenerator>
 
         <!-- 生成mapxml对应client，也就是接口dao -->
-        <javaClientGenerator targetPackage="cn.caohongliang.mybatis.generator.example"
+        <javaClientGenerator targetPackage="cn.caohongliang.dao"
                              targetProject="src/test/java" type="XMLMAPPER">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
 
         <!-- 配置表信息 -->
-        <table tableName="user"
-               domainObjectName="user.entity.User"
-               mapperName="user.dao.UserDao">
+        <table tableName="course"
+               domainObjectName="Course"
+               mapperName="CourseDao">
             <generatedKey column="id" sqlStatement="MySQL" identity="true"/>
+<!--            <ignoreColumn column="content"/>-->
         </table>
 
-        <table tableName="product"
-               domainObjectName="product.entity.Product"
-               mapperName="product.dao.ProductDao">
+        <table tableName="student"
+               domainObjectName="Student"
+               mapperName="StudentDao">
             <generatedKey column="id" sqlStatement="MySQL" identity="true"/>
         </table>
-        <table tableName="article"
-               domainObjectName="product.entity.Article"
-               mapperName="product.dao.ArticleDao">
-            <generatedKey column="id" sqlStatement="MySQL" identity="true"/>
+        <table tableName="student_course"
+               domainObjectName="StudentCourse"
+               mapperName="StudentCourseDao">
         </table>
-
+        <table tableName="teacher"
+               domainObjectName="Teacher"
+               mapperName="TeacherDao">
+        </table>
+        <table tableName="teacher_student"
+               domainObjectName="TeacherStudent"
+               mapperName="TeacherStudentDao">
+        </table>
     </context>
 </generatorConfiguration>

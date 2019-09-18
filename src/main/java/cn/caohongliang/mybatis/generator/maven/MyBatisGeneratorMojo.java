@@ -1,9 +1,9 @@
 package cn.caohongliang.mybatis.generator.maven;
 
+import cn.caohongliang.mybatis.generator.maven.plugin.AutoGenXmlPlugin;
 import cn.caohongliang.mybatis.generator.maven.plugin.BaseColumnListPlugin;
-import cn.caohongliang.mybatis.generator.maven.plugin.MapperPlugin;
 import cn.caohongliang.mybatis.generator.maven.plugin.DomainLombokPlugin;
-import cn.caohongliang.mybatis.generator.maven.plugin.DomainSubPackagePlugin;
+import cn.caohongliang.mybatis.generator.maven.plugin.ParentMapperPlugin;
 import cn.caohongliang.mybatis.generator.maven.util.PluginUtils;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.model.Resource;
@@ -34,268 +34,220 @@ import java.util.*;
 
 /**
  * Mybatis生成从这里启动
+ *
  * @author caohongliang
  */
 @Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES,
-        requiresDependencyResolution = ResolutionScope.TEST)
+		requiresDependencyResolution = ResolutionScope.TEST)
 public class MyBatisGeneratorMojo extends AbstractMojo {
 
-    private ThreadLocal<ClassLoader> savedClassloader = new ThreadLocal<>();
-    private List<Class<? extends Plugin>> defaultPluginTypes = Arrays.asList(
-            DomainLombokPlugin.class,
-            DomainSubPackagePlugin.class,
-            MapperPlugin.class,
-            BaseColumnListPlugin.class
-    );
+	private ThreadLocal<ClassLoader> savedClassloader = new ThreadLocal<>();
+	private List<Class<? extends Plugin>> defaultPluginTypes = Arrays.asList(
+			DomainLombokPlugin.class,
+			BaseColumnListPlugin.class,
+			AutoGenXmlPlugin.class,
+			ParentMapperPlugin.class
+	);
 
-    /**
-     * 当前项目
-     */
-    @Parameter(property = "project", required = true, readonly = true)
-    private MavenProject project;
+	/**
+	 * 当前项目
+	 */
+	@Parameter(property = "project", required = true, readonly = true)
+	private MavenProject project;
 
-    /**
-     * 输出目录.
-     */
-    @Parameter(defaultValue = "${project.build.directory}/generated-sources/mybatis-generator", required = true)
-    private File outputDirectory;
+	/**
+	 * 输出目录.
+	 */
+	@Parameter(defaultValue = "${project.build.directory}/generated-sources/mybatis-generator", required = true)
+	private File outputDirectory;
 
-    /**
-     * 配置文件路径
-     */
-    @Parameter(property = "mybatis.generator.configurationFile",
-            defaultValue = "${project.basedir}/src/main/resources/generatorConfig.xml", required = true)
-    private File configurationFile;
+	/**
+	 * 配置文件路径
+	 */
+	@Parameter(property = "mybatis.generator.configurationFile",
+			defaultValue = "${project.basedir}/src/main/resources/generatorConfig.xml", required = true)
+	private File configurationFile;
 
-    /**
-     * 指定mojo是否将进度消息写入日志。
-     */
-    @Parameter(defaultValue = "false")
-    private boolean verbose;
+	/**
+	 * 指定mojo是否将进度消息写入日志。
+	 */
+	@Parameter(defaultValue = "false")
+	private boolean verbose;
 
-    /**
-     * 指定mojo是否覆盖现有Java文件。默认值为false。
-     * 请注意，XML文件始终是合并的。
-     */
-    @Parameter(defaultValue = "true")
-    private boolean overwrite;
+	/**
+	 * 指定mojo是否覆盖现有Java文件。默认值为false。
+	 * 请注意，XML文件始终是合并的。
+	 */
+	@Parameter(defaultValue = "true")
+	private boolean overwrite;
 
-    /**
-     * Skip generator.
-     */
-    @Parameter(defaultValue = "false")
-    private boolean skip;
+	/**
+	 * Skip generator.
+	 */
+	@Parameter(defaultValue = "false")
+	private boolean skip;
 
-    /**
-     * 如果为true，那么范围compile，provided和系统范围中的依赖项将被*添加到生成器的类路径中。
-     * 将搜索这些依赖项，JDBC驱动程序，根类，根接口，生成器插件等。
-     */
-    @Parameter(defaultValue = "false")
-    private boolean includeCompileDependencies;
+	/**
+	 * 如果为true，那么范围compile，provided和系统范围中的依赖项将被*添加到生成器的类路径中。
+	 * 将搜索这些依赖项，JDBC驱动程序，根类，根接口，生成器插件等。
+	 */
+	@Parameter(defaultValue = "false")
+	private boolean includeCompileDependencies;
 
-    /**
-     * 如果为true，则所有范围中的依赖项将添加到生成器的类路径中。
-     * 将搜索这些依赖项，JDBC驱动程序，根类，根接口，生成器插件等
-     */
-    @Parameter(defaultValue = "false")
-    private boolean includeAllDependencies;
+	/**
+	 * 如果为true，则所有范围中的依赖项将添加到生成器的类路径中。
+	 * 将搜索这些依赖项，JDBC驱动程序，根类，根接口，生成器插件等
+	 */
+	@Parameter(defaultValue = "false")
+	private boolean includeAllDependencies;
 
-    /**
-     * 是否使用swagger，如果为true，则在生成的entity中会给字段使用@ApiModelProperty注解
-     */
-    @Parameter(defaultValue = "true")
-    private boolean domainUseSwagger;
+	/**
+	 * 是否使用swagger，如果为true，则在生成的entity中会给字段使用@ApiModelProperty注解
+	 */
+	@Parameter(defaultValue = "true")
+	private boolean domainUseSwagger;
 
-    /**
-     * 多主键时的Key的类存放位置
-     */
-    @Parameter(defaultValue = "key")
-    private String domainKeyPackage;
+	@Override
+	public void execute() throws MojoExecutionException {
+		if (skip) {
+			getLog().info("MyBatis generator is skipped.");
+			return;
+		}
 
-    /**
-     * example存放的位置
-     */
-    @Parameter(defaultValue = "example")
-    private String domainExamplePackage;
+		saveClassLoader();
 
-    @Parameter(defaultValue = "blob")
-    private String domainBlobPackage;
+		LogFactory.setLogFactory(new MavenLogFactory(this));
 
-    /**
-     * Dao接口基类的类全名（有主键）
-     */
-    @Parameter(required = true)
-    private String daoRootInterface;
+		calculateClassPath();
 
-    /**
-     * Dao接口基类的类全名（无主键）
-     */
-    @Parameter
-    private String daoRootInterfaceNotPrimaryKey;
+		// add resource directories to the classpath.  This is required to support
+		// use of a properties file in the build.  Typically, the properties file
+		// is in the project's source tree, but the plugin classpath does not
+		// include the project classpath.
+		List<Resource> resources = project.getResources();
+		List<String> resourceDirectories = new ArrayList<>();
+		for (Resource resource : resources) {
+			resourceDirectories.add(resource.getDirectory());
+		}
+		ClassLoader cl = ClassloaderUtility.getCustomClassloader(resourceDirectories);
+		ObjectFactory.addExternalClassLoader(cl);
 
-    /**
-     * 自动生成的xml文件存放位置
-     */
-    @Parameter(defaultValue = "autogen")
-    private String autoGenXmlDir;
+		if (configurationFile == null) {
+			throw new MojoExecutionException(
+					Messages.getString("RuntimeError.0")); //$NON-NLS-1$
+		}
 
-    /**
-     * 是否自动生成存放自定义SQL的文件（已生成则不会覆盖）
-     */
-    @Parameter(defaultValue = "true")
-    private boolean genCustomFile;
+		List<String> warnings = new ArrayList<>();
 
-    @Override
-    public void execute() throws MojoExecutionException {
-        if (skip) {
-            getLog().info("MyBatis generator is skipped.");
-            return;
-        }
+		if (!configurationFile.exists()) {
+			throw new MojoExecutionException(Messages.getString(
+					"RuntimeError.1", configurationFile.toString())); //$NON-NLS-1$
+		}
 
-        saveClassLoader();
+		try {
+			ConfigurationParser cp = new ConfigurationParser(
+					project.getProperties(), warnings);
+			Configuration config = cp.parseConfiguration(configurationFile);
+			//添加默认的plugins
+			addDefaultPlugins(config);
+			//设置Plugins的配置
+			setPluginsConfig();
 
-        LogFactory.setLogFactory(new MavenLogFactory(this));
+			ShellCallback callback = new MavenShellCallback(this, overwrite);
+			PluginUtils.shellCallback = callback;
 
-        calculateClassPath();
-
-        // add resource directories to the classpath.  This is required to support
-        // use of a properties file in the build.  Typically, the properties file
-        // is in the project's source tree, but the plugin classpath does not
-        // include the project classpath.
-        List<Resource> resources = project.getResources();
-        List<String> resourceDirectories = new ArrayList<>();
-        for (Resource resource : resources) {
-            resourceDirectories.add(resource.getDirectory());
-        }
-        ClassLoader cl = ClassloaderUtility.getCustomClassloader(resourceDirectories);
-        ObjectFactory.addExternalClassLoader(cl);
-
-        if (configurationFile == null) {
-            throw new MojoExecutionException(
-                    Messages.getString("RuntimeError.0")); //$NON-NLS-1$
-        }
-
-        List<String> warnings = new ArrayList<>();
-
-        if (!configurationFile.exists()) {
-            throw new MojoExecutionException(Messages.getString(
-                    "RuntimeError.1", configurationFile.toString())); //$NON-NLS-1$
-        }
-
-        try {
-            ConfigurationParser cp = new ConfigurationParser(
-                    project.getProperties(), warnings);
-            Configuration config = cp.parseConfiguration(configurationFile);
-            //添加默认的plugins
-            addDefaultPlugins(config);
-            //设置Plugins的配置
-            setPluginsConfig();
-
-            ShellCallback callback = new MavenShellCallback(this, overwrite);
-            PluginUtils.shellCallback = callback;
-
-            MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config,
-                    callback, warnings);
+			MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config,
+					callback, warnings);
 
 
-            myBatisGenerator.generate(new MavenProgressCallback(getLog(), verbose));
+			myBatisGenerator.generate(new MavenProgressCallback(getLog(), verbose));
 
-        } catch (XMLParserException e) {
-            for (String error : e.getErrors()) {
-                getLog().error(error);
-            }
+		} catch (XMLParserException e) {
+			for (String error : e.getErrors()) {
+				getLog().error(error);
+			}
 
-            throw new MojoExecutionException(e.getMessage());
-        } catch (SQLException | IOException e) {
-            throw new MojoExecutionException(e.getMessage());
-        } catch (InvalidConfigurationException e) {
-            for (String error : e.getErrors()) {
-                getLog().error(error);
-            }
+			throw new MojoExecutionException(e.getMessage());
+		} catch (SQLException | IOException e) {
+			throw new MojoExecutionException(e.getMessage());
+		} catch (InvalidConfigurationException e) {
+			for (String error : e.getErrors()) {
+				getLog().error(error);
+			}
 
-            throw new MojoExecutionException(e.getMessage());
-        } catch (InterruptedException e) {
-            // ignore (will never happen with the DefaultShellCallback)
-        }
+			throw new MojoExecutionException(e.getMessage());
+		} catch (InterruptedException e) {
+			// ignore (will never happen with the DefaultShellCallback)
+		}
 
-        for (String error : warnings) {
-            getLog().warn(error);
-        }
+		for (String error : warnings) {
+			getLog().warn(error);
+		}
 
-        if (project != null && outputDirectory != null
-                && outputDirectory.exists()) {
-            project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
+		if (project != null && outputDirectory != null
+				&& outputDirectory.exists()) {
+			project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
 
-            Resource resource = new Resource();
-            resource.setDirectory(outputDirectory.getAbsolutePath());
-            resource.addInclude("**/*.xml");
-            project.addResource(resource);
-        }
+			Resource resource = new Resource();
+			resource.setDirectory(outputDirectory.getAbsolutePath());
+			resource.addInclude("**/*.xml");
+			project.addResource(resource);
+		}
 
-        restoreClassLoader();
-    }
+		restoreClassLoader();
+	}
 
-    private void setPluginsConfig() {
-        DomainLombokPlugin.useSwagger = this.domainUseSwagger;
+	private void setPluginsConfig() {
+		DomainLombokPlugin.useSwagger = this.domainUseSwagger;
+	}
 
-        DomainSubPackagePlugin.keyPackage = this.domainKeyPackage;
-        DomainSubPackagePlugin.examplePackage = this.domainExamplePackage;
-        DomainSubPackagePlugin.blobPackage = this.domainBlobPackage;
+	private void addDefaultPlugins(Configuration config) {
+		config.getContexts().forEach(context -> defaultPluginTypes.forEach(pluginType -> {
+			PluginConfiguration pluginConfiguration = new PluginConfiguration();
+			pluginConfiguration.setConfigurationType(pluginType.getName());
+			context.addPluginConfiguration(pluginConfiguration);
+		}));
+	}
 
-        MapperPlugin.rootInterface = this.daoRootInterface;
-        MapperPlugin.rootInterfaceNotPrimaryKey = this.daoRootInterfaceNotPrimaryKey;
-        MapperPlugin.autoGenXmlDir = this.autoGenXmlDir;
-        MapperPlugin.genCustomFile = this.genCustomFile;
+	private void calculateClassPath() throws MojoExecutionException {
+		if (includeCompileDependencies || includeAllDependencies) {
+			try {
+				// add the project compile classpath to the plugin classpath,
+				// so that the project dependency classes can be found
+				// directly, without adding the classpath to configuration's classPathEntries
+				// repeatedly.Examples are JDBC drivers, root classes, root interfaces, etc.
+				Set<String> entries = new HashSet<>();
+				if (includeCompileDependencies) {
+					entries.addAll(project.getCompileClasspathElements());
+				}
 
-    }
+				if (includeAllDependencies) {
+					entries.addAll(project.getTestClasspathElements());
+				}
 
-    private void addDefaultPlugins(Configuration config) {
-        config.getContexts().forEach(context -> defaultPluginTypes.forEach(pluginType -> {
-            PluginConfiguration pluginConfiguration = new PluginConfiguration();
-            pluginConfiguration.setConfigurationType(pluginType.getName());
-            context.addPluginConfiguration(pluginConfiguration);
-        }));
-    }
+				// remove the output directories (target/classes and target/test-classes)
+				// because this mojo runs in the generate-sources phase and
+				// those directories have not been created yet (typically)
+				entries.remove(project.getBuild().getOutputDirectory());
+				entries.remove(project.getBuild().getTestOutputDirectory());
 
-    private void calculateClassPath() throws MojoExecutionException {
-        if (includeCompileDependencies || includeAllDependencies) {
-            try {
-                // add the project compile classpath to the plugin classpath,
-                // so that the project dependency classes can be found
-                // directly, without adding the classpath to configuration's classPathEntries
-                // repeatedly.Examples are JDBC drivers, root classes, root interfaces, etc.
-                Set<String> entries = new HashSet<>();
-                if (includeCompileDependencies) {
-                    entries.addAll(project.getCompileClasspathElements());
-                }
+				ClassLoader contextClassLoader = ClassloaderUtility.getCustomClassloader(entries);
+				Thread.currentThread().setContextClassLoader(contextClassLoader);
+			} catch (DependencyResolutionRequiredException e) {
+				throw new MojoExecutionException("Dependency Resolution Required", e);
+			}
+		}
+	}
 
-                if (includeAllDependencies) {
-                    entries.addAll(project.getTestClasspathElements());
-                }
+	public File getOutputDirectory() {
+		return outputDirectory;
+	}
 
-                // remove the output directories (target/classes and target/test-classes)
-                // because this mojo runs in the generate-sources phase and
-                // those directories have not been created yet (typically)
-                entries.remove(project.getBuild().getOutputDirectory());
-                entries.remove(project.getBuild().getTestOutputDirectory());
+	private void saveClassLoader() {
+		savedClassloader.set(Thread.currentThread().getContextClassLoader());
+	}
 
-                ClassLoader contextClassLoader = ClassloaderUtility.getCustomClassloader(entries);
-                Thread.currentThread().setContextClassLoader(contextClassLoader);
-            } catch (DependencyResolutionRequiredException e) {
-                throw new MojoExecutionException("Dependency Resolution Required", e);
-            }
-        }
-    }
-
-    public File getOutputDirectory() {
-        return outputDirectory;
-    }
-
-    private void saveClassLoader() {
-        savedClassloader.set(Thread.currentThread().getContextClassLoader());
-    }
-
-    private void restoreClassLoader() {
-        Thread.currentThread().setContextClassLoader(savedClassloader.get());
-    }
+	private void restoreClassLoader() {
+		Thread.currentThread().setContextClassLoader(savedClassloader.get());
+	}
 }

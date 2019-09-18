@@ -81,7 +81,6 @@ public class BaseColumnListPlugin extends PluginAdapter {
         while (iter.hasNext()) {
             String column = MyBatis3FormattingUtilities.getSelectListPhrase((IntrospectedColumn) iter.next());
             column = "${alias}." + column + (hasColumnPrefix ? " as ${columnPrefix}" + column : "");
-            System.out.println(column);
 
             sb.append(column);
             if (iter.hasNext()) {

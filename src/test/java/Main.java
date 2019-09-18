@@ -1,14 +1,11 @@
-import cn.caohongliang.mybatis.generator.maven.plugin.BaseColumnListPlugin;
-import cn.caohongliang.mybatis.generator.maven.plugin.DomainLombokPlugin;
-import cn.caohongliang.mybatis.generator.maven.plugin.DomainSubPackagePlugin;
-import cn.caohongliang.mybatis.generator.maven.plugin.MapperPlugin;
+import cn.caohongliang.mybatis.generator.maven.parser.CustomConfigurationParser;
+import cn.caohongliang.mybatis.generator.maven.plugin.*;
 import cn.caohongliang.mybatis.generator.maven.util.PluginUtils;
 import org.mybatis.generator.api.MyBatisGenerator;
 import org.mybatis.generator.api.PluginAdapter;
 import org.mybatis.generator.config.Configuration;
 import org.mybatis.generator.config.Context;
 import org.mybatis.generator.config.PluginConfiguration;
-import org.mybatis.generator.config.xml.ConfigurationParser;
 import org.mybatis.generator.internal.DefaultShellCallback;
 
 import java.io.InputStream;
@@ -24,19 +21,17 @@ public class Main {
         boolean overwrite = true;
         List<String> warnings = new ArrayList<>();
 
-        InputStream inputFile = Main.class.getResourceAsStream("generatorConfig.xml");
+        InputStream inputFile = Main.class.getResourceAsStream("/generatorConfig.xml");
 
-        ConfigurationParser cp = new ConfigurationParser(warnings);
+        CustomConfigurationParser cp = new CustomConfigurationParser(warnings);
         Configuration config = cp.parseConfiguration(inputFile);
 
         //加载默认插件
         for (Context context : config.getContexts()) {
+            addPlugin(context, ParentMapperPlugin.class);
             addPlugin(context, DomainLombokPlugin.class);
-            addPlugin(context, MapperPlugin.class);
-            MapperPlugin.rootInterface = "cn.caohongliang.mybatis.generator.maven.dao.BaseDao";
-            MapperPlugin.rootInterfaceNotPrimaryKey = "cn.caohongliang.mybatis.generator.maven.dao.BaseNotPrimaryKeyDao";
             addPlugin(context, BaseColumnListPlugin.class);
-            addPlugin(context, DomainSubPackagePlugin.class);
+            addPlugin(context, AutoGenXmlPlugin.class);
         }
 
 

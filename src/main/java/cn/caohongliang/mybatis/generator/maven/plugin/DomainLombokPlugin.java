@@ -50,23 +50,23 @@ public class DomainLombokPlugin extends PluginAdapter {
 
         javaDocLines.add("/**");
         String br = "<br/>";
-        String apiModelProperty = "@ApiModelProperty(\"";
+        StringBuilder apiModelProperty = new StringBuilder("@ApiModelProperty(\"");
         while (matcher.find()) {
             String group = matcher.group();
             javaDocLines.add(" * " + group);
-            apiModelProperty = apiModelProperty + group + br;
+            apiModelProperty.append(group).append(br);
         }
-        apiModelProperty = apiModelProperty + "\")";
+        apiModelProperty.append("\")");
         javaDocLines.add(" */");
 
         int index = apiModelProperty.lastIndexOf(br);
         if (index != -1) {
-            apiModelProperty = apiModelProperty.replaceAll("<br/>\\s*\"\\)", "\")");
+            apiModelProperty = new StringBuilder(apiModelProperty.toString().replaceAll("<br/>\\s*\"\\)", "\")"));
         }
 
         //设置字段注释
         if (useSwagger) {
-            field.addAnnotation(apiModelProperty);
+            field.addAnnotation(apiModelProperty.toString());
             topLevelClass.addImportedType("io.swagger.annotations.ApiModelProperty");
         }
         return true;
